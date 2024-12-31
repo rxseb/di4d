@@ -1,3 +1,4 @@
+/// See [Injector].
 library;
 
 export 'src/injection_exception.dart' show InjectionException;
