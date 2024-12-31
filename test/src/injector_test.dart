@@ -143,11 +143,17 @@ void _testRegisterValueWhenDependencyRegistered() {
 void _testUnregisterWhenDependencyRegistered() {
   final injector = Injector();
   injector.registerValue(_DummyClass());
+  injector.registerLazyValue(() => 1);
 
   injector.unregister<_DummyClass>();
+  injector.unregister<int>();
 
   expect(
     () => injector.inject<_DummyClass>(),
+    throwsA(isA<InjectionException>()),
+  );
+  expect(
+    () => injector.inject<int>(),
     throwsA(isA<InjectionException>()),
   );
 }

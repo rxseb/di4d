@@ -31,6 +31,13 @@ class Injector {
     return _dependencies[T];
   }
 
+  /// Registers a lazy value of type [T] in the injector.
+  ///
+  /// A lazy value is a value which is built only the first time it is
+  /// injected. Further injections will reuse the already built value.
+  ///
+  /// Throws a [InjectionException] if a dependency of type [T] is already
+  /// registered.
   void registerLazyValue<T>(DependencyBuilder<T> builder) {
     _throwIfRegistered(T);
     _dependencies[T] = builder;
