@@ -1,9 +1,11 @@
 import 'package:di4d/src/injection_exception.dart';
 
+typedef DependencyBuilder<T> = T Function();
+
 /// An injector to register dependencies and inject them.
 class Injector {
   static Injector? _instance;
-  final _container = <Type, dynamic>{};
+  final _dependencies = <Type, dynamic>{};
 
   Injector._internal();
 
@@ -14,14 +16,24 @@ class Injector {
   factory Injector() => _instance ??= Injector._internal();
 
   /// Clears all registered dependencies.
-  void clear() => _container.clear();
+  void clear() {
+    _dependencies.clear();
+  }
 
   /// Returns a value of type [T].
   ///
   /// Throws a [InjectionException] if no dependency of type [T] is registered.
   T inject<T>() {
     _throwIfNotRegistered(T);
-    return _container[T];
+    if (_dependencies[T] is DependencyBuilder) {
+      _dependencies[T] = _dependencies[T]();
+    }
+    return _dependencies[T];
+  }
+
+  void registerLazyValue<T>(DependencyBuilder<T> builder) {
+    _throwIfRegistered(T);
+    _dependencies[T] = builder;
   }
 
   /// Registers a value of type [T] in the injector.
@@ -30,7 +42,7 @@ class Injector {
   /// registered.
   void registerValue<T>(T value) {
     _throwIfRegistered(T);
-    _container[T] = value;
+    _dependencies[T] = value;
   }
 
   /// Unregisters the dependency of type [T].
@@ -38,17 +50,17 @@ class Injector {
   /// Throws a [InjectionException] if no dependency of type [T] is registered.
   void unregister<T>() {
     _throwIfNotRegistered(T);
-    _container.remove(T);
+    _dependencies.remove(T);
   }
 
   void _throwIfNotRegistered(Type type) {
-    if (!_container.containsKey(type)) {
+    if (!_dependencies.containsKey(type)) {
       throw InjectionException('No dependency registered for type $type');
     }
   }
 
   void _throwIfRegistered(Type type) {
-    if (_container.containsKey(type)) {
+    if (_dependencies.containsKey(type)) {
       throw InjectionException(
         'A dependency of type $type is already registered',
       );

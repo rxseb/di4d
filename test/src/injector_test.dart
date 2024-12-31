@@ -26,14 +26,24 @@ void main() {
         _testInjectWhenDependencyNotRegistered,
       );
     });
-    group('.registerValue()', () {
+    group('.registerLazyValue()', () {
       test(
-        'registers a value',
-        _testRegisterValueWhenDependencyDoesNotExist,
+        'registers a lazy value when a dependency of same type is not registered',
+        _testRegisterLazyValueWhenDependencyNotRegistered,
       );
       test(
-        'throws an exception when a dependency of same type is already registered',
-        _testRegisterValueWhenDependencyAlreadyExists,
+        'throws an exception when a dependency of same type is registered',
+        _testRegisterLazyValueWhenDependencyRegistered,
+      );
+    });
+    group('.registerValue()', () {
+      test(
+        'registers a value when a dependency of same type is not registered',
+        _testRegisterValueWhenDependencyNotRegistered,
+      );
+      test(
+        'throws an exception when a dependency of same type is registered',
+        _testRegisterValueWhenDependencyRegistered,
       );
     });
     group('.unregister()', () {
@@ -51,19 +61,24 @@ void main() {
 
 void _testInjectorIsSingleton() {
   final injector = Injector();
-  final anotherInjector = Injector();
+  final otherInjector = Injector();
 
-  expect(injector, equals(anotherInjector));
+  expect(injector, equals(otherInjector));
 }
 
 void _testClear() {
   final injector = Injector();
   injector.registerValue(_DummyClass());
+  injector.registerLazyValue(() => 1);
 
   injector.clear();
 
   expect(
     () => injector.inject<_DummyClass>(),
+    throwsA(isA<InjectionException>()),
+  );
+  expect(
+    () => injector.inject<int>(),
     throwsA(isA<InjectionException>()),
   );
 }
@@ -86,7 +101,27 @@ void _testInjectWhenDependencyNotRegistered() {
   );
 }
 
-void _testRegisterValueWhenDependencyDoesNotExist() {
+void _testRegisterLazyValueWhenDependencyNotRegistered() {
+  final injector = Injector();
+
+  injector.registerLazyValue(() => _DummyClass());
+  final value = injector.inject<_DummyClass>();
+  final otherValue = injector.inject<_DummyClass>();
+
+  expect(value, equals(otherValue));
+}
+
+void _testRegisterLazyValueWhenDependencyRegistered() {
+  final injector = Injector();
+  injector.registerValue(_DummyClass());
+
+  expect(
+    () => injector.registerLazyValue(() => _DummyClass()),
+    throwsA(isA<InjectionException>()),
+  );
+}
+
+void _testRegisterValueWhenDependencyNotRegistered() {
   final injector = Injector();
   final value = _DummyClass();
 
@@ -95,7 +130,7 @@ void _testRegisterValueWhenDependencyDoesNotExist() {
   expect(injector.inject<_DummyClass>(), equals(value));
 }
 
-void _testRegisterValueWhenDependencyAlreadyExists() {
+void _testRegisterValueWhenDependencyRegistered() {
   final injector = Injector();
   injector.registerValue(_DummyClass());
 
