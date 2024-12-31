@@ -10,19 +10,15 @@ void main() {
       'is a singleton',
       _testInjectorIsSingleton,
     );
-    group('.registerInstance()', () {
+    group('.clear()', () {
       test(
-        'register an instance',
-        _testRegisterInstanceWhenDependencyDoesNotExist,
-      );
-      test(
-        'throws an exception when a dependency for of same type is already registered',
-        _testRegisterInstanceWhenDependencyAlreadyExists,
+        'clears all registered dependencies',
+        _testClear,
       );
     });
     group('.inject()', () {
       test(
-        'returns an instance when dependency is registered',
+        'returns a value when dependency is registered',
         _testInjectWhenDependencyRegistered,
       );
       test(
@@ -30,10 +26,24 @@ void main() {
         _testInjectWhenDependencyNotRegistered,
       );
     });
-    group('.clear()', () {
+    group('.registerValue()', () {
       test(
-        'clears all registered dependencies',
-        _testClear,
+        'registers a value',
+        _testRegisterValueWhenDependencyDoesNotExist,
+      );
+      test(
+        'throws an exception when a dependency of same type is already registered',
+        _testRegisterValueWhenDependencyAlreadyExists,
+      );
+    });
+    group('.unregister()', () {
+      test(
+        'unregisters a dependency when it is registered',
+        _testUnregisterWhenDependencyRegistered,
+      );
+      test(
+        'throws an exception when dependency is not registered',
+        _testUnregisterWhenDependencyNotRegistered,
       );
     });
   });
@@ -46,21 +56,14 @@ void _testInjectorIsSingleton() {
   expect(injector, equals(anotherInjector));
 }
 
-void _testRegisterInstanceWhenDependencyDoesNotExist() {
+void _testClear() {
   final injector = Injector();
-  final instance = _DummyClass();
+  injector.registerValue(_DummyClass());
 
-  injector.registerInstance(instance);
-
-  expect(injector.inject<_DummyClass>(), equals(instance));
-}
-
-void _testRegisterInstanceWhenDependencyAlreadyExists() {
-  final injector = Injector();
-  injector.registerInstance(_DummyClass());
+  injector.clear();
 
   expect(
-    () => injector.registerInstance(_DummyClass()),
+    () => injector.inject<_DummyClass>(),
     throwsA(isA<InjectionException>()),
   );
 }
@@ -68,7 +71,7 @@ void _testRegisterInstanceWhenDependencyAlreadyExists() {
 void _testInjectWhenDependencyRegistered() {
   final injector = Injector();
 
-  injector.registerInstance(_DummyClass());
+  injector.registerValue(_DummyClass());
   final injected = injector.inject<_DummyClass>();
 
   expect(injected, isA<_DummyClass>());
@@ -83,14 +86,42 @@ void _testInjectWhenDependencyNotRegistered() {
   );
 }
 
-void _testClear() {
+void _testRegisterValueWhenDependencyDoesNotExist() {
   final injector = Injector();
-  injector.registerInstance(_DummyClass());
+  final value = _DummyClass();
 
-  injector.clear();
+  injector.registerValue(value);
+
+  expect(injector.inject<_DummyClass>(), equals(value));
+}
+
+void _testRegisterValueWhenDependencyAlreadyExists() {
+  final injector = Injector();
+  injector.registerValue(_DummyClass());
+
+  expect(
+    () => injector.registerValue(_DummyClass()),
+    throwsA(isA<InjectionException>()),
+  );
+}
+
+void _testUnregisterWhenDependencyRegistered() {
+  final injector = Injector();
+  injector.registerValue(_DummyClass());
+
+  injector.unregister<_DummyClass>();
 
   expect(
     () => injector.inject<_DummyClass>(),
+    throwsA(isA<InjectionException>()),
+  );
+}
+
+void _testUnregisterWhenDependencyNotRegistered() {
+  final injector = Injector();
+
+  expect(
+    () => injector.unregister<_DummyClass>(),
     throwsA(isA<InjectionException>()),
   );
 }
